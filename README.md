@@ -340,4 +340,414 @@ plt.show()
 
 ## 2026 - 06 - 18
 
+# Pandas 핵심 요약 노트
+
+## 기본 import
+
+```python
+import pandas as pd
+import numpy as np
+```
+
+## Series
+
+- 1차원 데이터
+- 리스트를 한 줄짜리 데이터로 바꿀 때 사용
+- `None`은 `NaN`으로 표시됨
+
+```python
+se = pd.Series([1, 2, None, 3])
+```
+
+결측값 확인:
+
+```python
+se.isna()
+```
+
+인덱스 직접 지정:
+
+```python
+se = pd.Series([1, 2, None, 4], index=['A', 'B', 'C', 'D'])
+```
+
+값 선택:
+
+```python
+se['A']
+```
+
+## DataFrame
+
+- 2차원 표 데이터
+- 행과 열이 있음
+- 엑셀 표처럼 생각하면 됨
+
+```python
+df = pd.DataFrame({
+    '월': ['1월', '2월', '3월', '4월'],
+    '수입': [9500, 6200, 6050, 7000],
+    '지출': [5040, 2350, 2300, 4800]
+})
+```
+
+열 이름 확인:
+
+```python
+df.columns
+```
+
+행 인덱스 확인:
+
+```python
+df.index
+```
+
+앞부분 확인:
+
+```python
+df.head()
+```
+
+주의:
+
+```python
+df.head
+```
+
+이렇게 쓰면 함수 실행이 아니라 함수 자체가 출력된다.
+
+## CSV 읽기
+
+기본 읽기:
+
+```python
+df = pd.read_csv("./vehicle_prod.csv")
+```
+
+첫 번째 열을 인덱스로 사용:
+
+```python
+df = pd.read_csv("./vehicle_prod.csv", index_col=0)
+```
+
+`vehicle_prod.csv`에서는 국가명이 인덱스가 된다.
+
+## 열 선택
+
+한 열 선택:
+
+```python
+df['2011']
+```
+
+여러 열 선택:
+
+```python
+df[['2007', '2008', '2009']]
+```
+
+주의:
+
+- 한 열: 대괄호 1개
+- 여러 열: 대괄호 2개
+
+```python
+df['2011']              # Series
+df[['2011']]            # DataFrame
+```
+
+## loc
+
+- 인덱스 이름으로 선택
+- 열 이름으로 선택
+- 문자열 날짜, 국가명 같은 이름 기반 선택
+
+한 행 선택:
+
+```python
+df.loc['China']
+```
+
+행과 열 선택:
+
+```python
+df.loc['China', '2011']
+```
+
+여러 행 + 한 열:
+
+```python
+df.loc[['China', 'Korea'], '2011']
+```
+
+날짜 인덱스 선택:
+
+```python
+weather.loc['2012-02-11']
+```
+
+주의:
+
+```python
+weather.loc('2012-02-11')   # 틀림
+weather.loc['2012-02-11']   # 맞음
+```
+
+`loc`는 함수가 아니라 선택 도구라서 `()`가 아니라 `[]`를 쓴다.
+
+## iloc
+
+- 위치 번호로 선택
+- 0번째, 1번째처럼 숫자 위치 기준
+
+첫 번째 행:
+
+```python
+df.iloc[0]
+```
+
+첫 번째 행, 다섯 번째 열:
+
+```python
+df.iloc[0, 4]
+```
+
+`2011` 열에서 0번째, 4번째 값:
+
+```python
+df['2011'].iloc[[0, 4]]
+```
+
+주의:
+
+```python
+new_weather_mean_windy.iloc['2012-02-11']   # 틀림
+new_weather_mean_windy.loc['2012-02-11']    # 맞음
+```
+
+`iloc`는 문자열 인덱스가 아니라 숫자 위치만 사용한다.
+
+## loc / iloc 구분
+
+| 구분 | 기준 | 예시 |
+|---|---|---|
+| `loc` | 이름 | `df.loc['China']` |
+| `iloc` | 위치 번호 | `df.iloc[0]` |
+
+외우기:
+
+- `loc`: label
+- `iloc`: integer location
+
+## 통계 함수
+
+합계:
+
+```python
+df['수입'].sum()
+```
+
+평균:
+
+```python
+df['수입'].mean()
+```
+
+최댓값:
+
+```python
+df['수입'].max()
+```
+
+최솟값:
+
+```python
+df['수입'].min()
+```
+
+최댓값 위치:
+
+```python
+np.argmax(df['수입'])
+```
+
+## 행 방향 / 열 방향
+
+열 기준 계산:
+
+```python
+df.sum()
+```
+
+행 기준 계산:
+
+```python
+df.sum(axis=1)
+```
+
+정리:
+
+- `axis=0`: 세로 방향, 열별 계산
+- `axis=1`: 가로 방향, 행별 계산
+
+## 새 열 추가
+
+연도별 값을 더해서 `total` 열 만들기:
+
+```python
+df['total'] = df.sum(axis=1)
+```
+
+연도별 평균을 `mean` 열로 만들기:
+
+```python
+df['mean'] = df[['2007', '2008', '2009', '2010', '2011']].mean(axis=1)
+```
+
+특정 열만 골라 계산해야 할 때는 열 목록을 직접 지정한다.
+
+## 열 삭제
+
+```python
+df.drop('2007', axis=1, inplace=True)
+```
+
+뜻:
+
+- `'2007'`: 삭제할 열 이름
+- `axis=1`: 열 삭제
+- `inplace=True`: 원본에 바로 반영
+
+행 삭제는 `axis=0`.
+
+## 새 행 추가
+
+연도별 생산 대수 합계 행 추가:
+
+```python
+df = pd.read_csv("./vehicle_prod.csv", index_col=0)
+df.loc['Total'] = df.select_dtypes(np.number).sum()
+```
+
+핵심:
+
+- `df.loc['Total']`: `Total`이라는 새 행
+- `select_dtypes(np.number)`: 숫자 열만 선택
+- `sum()`: 열별 합계
+
+결과 형태:
+
+```text
+         2007   2008   2009   2010   2011
+China    ...
+Korea    ...
+Total   54.12  50.77  45.04  55.68  57.25
+```
+
+## 날짜 처리
+
+날짜 문자열을 날짜 타입으로 변환:
+
+```python
+weather2['일시'] = pd.to_datetime(weather2['일시'])
+```
+
+연도 추출:
+
+```python
+weather2['year'] = pd.DatetimeIndex(weather2['일시']).year
+```
+
+월 추출:
+
+```python
+weather2['month'] = pd.DatetimeIndex(weather2['일시']).month
+```
+
+일 추출:
+
+```python
+weather2['day'] = pd.DatetimeIndex(weather2['일시']).day
+```
+
+`dt` 사용 방식:
+
+```python
+weather2['year'] = weather2['일시'].dt.year
+weather2['month'] = weather2['일시'].dt.month
+weather2['day'] = weather2['일시'].dt.day
+```
+
+주의:
+
+```python
+weather2['일시'] = pd.DatetimeIndex(weather2['일시']), year
+```
+
+쉼표 때문에 오른쪽이 튜플이 된다. `year`라는 변수가 없으면 오류가 난다.
+
+올바른 방식:
+
+```python
+weather2['일시'] = pd.to_datetime(weather2['일시'])
+weather2['year'] = pd.DatetimeIndex(weather2['일시']).year
+```
+
+## 자주 헷갈리는 코드
+
+### 1. 메서드에는 괄호 붙이기
+
+```python
+df.head()       # 맞음
+df.head         # 틀림
+```
+
+### 2. loc는 대괄호
+
+```python
+weather.loc['2012-02-11']      # 맞음
+weather.loc('2012-02-11')      # 틀림
+```
+
+### 3. iloc는 숫자 위치
+
+```python
+df.iloc[0]      # 맞음
+df.iloc['China'] # 틀림
+```
+
+### 4. 날짜에서 연도만 뽑기
+
+```python
+pd.DatetimeIndex(weather2['일시']).year
+```
+
+이 코드는 실행만 하면 연도 배열을 보여준다.
+
+새 열로 저장하려면:
+
+```python
+weather2['year'] = pd.DatetimeIndex(weather2['일시']).year
+```
+
+### 5. 한 열과 여러 열
+
+```python
+df['2011']       # 한 열, Series
+df[['2011']]     # 한 열이지만 DataFrame
+```
+
+## 시험 직전 체크
+
+- `read_csv()`로 파일 읽기
+- `index_col=0`은 첫 번째 열을 인덱스로 사용
+- `head()`는 괄호 필요
+- `loc`는 이름 선택
+- `iloc`는 위치 번호 선택
+- `axis=1`은 행 방향 계산
+- 새 열 추가는 `df['열이름'] = 값`
+- 새 행 추가는 `df.loc['행이름'] = 값`
+- 날짜 변환은 `pd.to_datetime()`
+- 연도 추출은 `.dt.year` 또는 `pd.DatetimeIndex(...).year`
 
