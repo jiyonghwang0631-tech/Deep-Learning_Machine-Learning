@@ -751,3 +751,256 @@ df[['2011']]     # 한 열이지만 DataFrame
 - 날짜 변환은 `pd.to_datetime()`
 - 연도 추출은 `.dt.year` 또는 `pd.DatetimeIndex(...).year`
 
+---------------------------------------------------------------------------------------------------
+
+## 2026 - 06 - 19 
+
+# Machine Learning 실습 정리
+
+이 폴더는 고려대학교 Machine Learning 강의자료와 Titanic 데이터셋을 활용한 Python 데이터 분석 실습 내용을 정리한 공간이다.
+
+## 포함 파일
+
+| 파일 | 설명 |
+| --- | --- |
+| `ex_01.ipynb` | Titanic 데이터셋을 이용한 데이터 로드, 결측치 처리, 시각화, 상관관계 분석 실습 노트북 |
+| `titanic.csv` | Seaborn Titanic 데이터셋을 CSV로 저장한 파일 |
+| `titanic_heatmap.csv` | 히트맵 분석용 전처리 결과를 저장한 파일 |
+| `고려대학교_Machin_Learning_강의자료.pdf` | 머신러닝 강의자료 |
+
+## 강의자료 기반 학습 주제
+
+PDF 강의자료에서는 머신러닝의 기본 개념과 대표 알고리즘, 딥러닝 기초 주제가 함께 다뤄진다. 파일 내부에서 확인되는 주요 키워드는 다음과 같다.
+
+- Machine Learning의 기본 개념과 함수 근사 관점
+- 지도학습 문제에서의 분류와 예측 흐름
+- KNN 알고리즘
+- Kaggle Titanic 데이터셋을 활용한 생존 예측 문제
+- 신경망 기반 학습으로 확장되는 CNN, Keras, AlexNet, MNIST, RNN, BPTT 관련 내용
+
+이번 노트북 실습은 위 강의 흐름 중 **Titanic 데이터를 이용한 탐색적 데이터 분석과 머신러닝 전처리 기초**에 해당한다.
+
+## 실습 내용 요약
+
+### 1. 라이브러리 사용
+
+실습에서는 다음 라이브러리를 사용했다.
+
+```python
+import seaborn as sns
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+```
+
+- `seaborn`: Titanic 데이터셋 로드 및 시각화
+- `pandas`: 데이터프레임 처리, 결측치 확인, 컬럼 변환
+- `numpy`: 수치 연산
+- `matplotlib`: 그래프 출력
+
+### 2. Titanic 데이터 로드
+
+```python
+titanic = sns.load_dataset("titanic")
+```
+
+Seaborn에서 제공하는 Titanic 데이터를 불러와 생존 여부(`survived`), 객실 등급(`pclass`), 성별(`sex`), 나이(`age`), 요금(`fare`), 동승 가족 수(`sibsp`, `parch`) 등을 분석했다.
+
+### 3. 결측치 확인과 처리
+
+```python
+print(titanic.isnull().sum())
+```
+
+주요 결측치 처리 내용은 다음과 같다.
+
+- `age`: 중앙값으로 결측치 대체
+- `embarked`: 최빈값인 `S`로 결측치 대체
+- `deck`: `C`로 결측치 대체
+- `embark_town`: `Cherbourg`로 결측치 대체
+
+예시:
+
+```python
+titanic['age'] = titanic['age'].fillna(value=titanic['age'].median())
+titanic['embarked'] = titanic['embarked'].fillna(value='S')
+```
+
+결측치를 처리하는 이유는 시각화나 상관관계 분석, 이후 머신러닝 모델 학습에서 누락값으로 인한 오류를 줄이기 위해서다.
+
+### 4. 성별에 따른 생존 분석
+
+성별 조건 필터링을 통해 남성과 여성의 생존자 수를 비교했다.
+
+```python
+titanic[titanic['sex'] == 'male']['survived'].value_counts()
+titanic[titanic['sex'] == 'female']['survived'].value_counts()
+```
+
+노트북 실행 결과:
+
+- 남성: 사망 468명, 생존 109명
+- 여성: 생존 233명, 사망 81명
+
+이를 통해 Titanic 데이터에서는 성별이 생존 여부와 강한 관련이 있음을 확인했다.
+
+### 5. 시각화
+
+성별 생존 비율은 파이 차트로 비교했고, 객실 등급과 생존 여부는 countplot으로 시각화했다.
+
+```python
+sns.countplot(x='pclass', hue='survived', data=titanic)
+plt.title(label='Pclass vs Survived')
+```
+
+이 시각화는 객실 등급별 생존/사망 분포를 비교하기 위한 것이다.
+
+### 6. 상관관계 분석
+
+`corr()`를 사용해 생존 여부와 다른 수치형 변수 간의 피어슨 상관관계를 확인했다.
+
+```python
+titanic['survived'].corr(other=titanic['adult_male'], method='pearson')
+titanic['survived'].corr(other=titanic['fare'], method='pearson')
+```
+
+노트북 실행 결과:
+
+- `survived`와 `adult_male`: 약 `-0.557`
+- `survived`와 `fare`: 약 `0.257`
+
+해석:
+
+- `adult_male`은 생존 여부와 음의 상관관계가 크다.
+- `fare`는 생존 여부와 약한 양의 상관관계가 있다.
+
+### 7. Pairplot 분석
+
+```python
+sns.pairplot(data=titanic, hue='survived')
+plt.show()
+```
+
+`pairplot`을 사용해 여러 변수 간의 관계를 한 번에 확인했다. `hue='survived'`를 지정하여 생존 여부에 따라 데이터 분포가 어떻게 달라지는지 비교했다.
+
+### 8. 히트맵 분석용 파생 변수 생성
+
+나이는 10년 단위 범주형 값으로 변환했다.
+
+```python
+def category_age(x):
+    if x >= 70:
+        return 7
+    elif x >= 60:
+        return 6
+    elif x >= 50:
+        return 5
+    elif x >= 40:
+        return 4
+    elif x >= 30:
+        return 3
+    elif x >= 20:
+        return 2
+    elif x >= 10:
+        return 1
+    else:
+        return 0
+```
+
+성별과 가족 수 파생 변수도 생성했다.
+
+```python
+titanic['age2'] = titanic['age'].apply(category_age)
+titanic['sex'] = titanic['sex'].map({'male': 1, 'female': 0})
+titanic['family'] = titanic['sibsp'] + titanic['parch'] + 1
+```
+
+- `age2`: 나이를 10년 단위 범주로 변환한 값
+- `sex`: 남성 `1`, 여성 `0`으로 변환한 값
+- `family`: 본인을 포함한 가족 수
+
+### 9. 상관관계 히트맵
+
+```python
+heatmap_data = titanic[['survived', 'sex', 'age2', 'family', 'pclass', 'fare']]
+
+sns.heatmap(
+    heatmap_data.astype(float).corr(),
+    linewidths=0.1,
+    vmax=1.0,
+    square=True,
+    cmap=plt.cm.RdBu,
+    linecolor='white',
+    annot=True,
+    annot_kws={'size': 10}
+)
+plt.show()
+```
+
+히트맵에서 확인한 주요 관계:
+
+- `survived`와 `sex`는 양의 상관관계가 있다.
+- `survived`와 `pclass`는 음의 상관관계가 있다.
+- `survived`와 `fare`는 양의 상관관계가 있다.
+- `pclass`와 `fare`는 비교적 강한 음의 상관관계가 있다.
+
+## 실습 중 발생한 문제와 해결
+
+### CSV 저장 권한 오류
+
+```python
+titanic.to_csv(path_or_buf='C:\\titanic_heatmap.csv', index=False)
+```
+
+`C:\` 최상위 경로는 쓰기 권한이 제한될 수 있어 `PermissionError`가 발생했다. 프로젝트 폴더 안에 저장하도록 수정한다.
+
+```python
+titanic.to_csv(path_or_buf='titanic_heatmap.csv', index=False)
+```
+
+### Pandas `map()` 경고
+
+```python
+titanic['sex'] = titanic['sex'].map(arg={'male': 1, 'female': 0})
+```
+
+`arg` 파라미터는 향후 지원이 중단될 예정이므로 다음처럼 수정한다.
+
+```python
+titanic['sex'] = titanic['sex'].map({'male': 1, 'female': 0})
+```
+
+### 히트맵에서 `sex` 값이 비어 보이는 문제
+
+같은 셀을 반복 실행하면 이미 `1`, `0`으로 바뀐 `sex` 컬럼을 다시 `'male'`, `'female'` 기준으로 매핑하면서 전부 `NaN`이 될 수 있다.
+
+해결 방법:
+
+```python
+titanic = sns.load_dataset('titanic')
+titanic['sex'] = titanic['sex'].map({'male': 1, 'female': 0})
+```
+
+전처리 셀을 다시 실행할 때는 원본 데이터를 먼저 다시 불러오는 것이 안전하다.
+
+## 핵심 학습 포인트
+
+- 데이터 분석 전에는 결측치 확인과 처리가 필요하다.
+- 범주형 데이터는 머신러닝과 상관관계 분석을 위해 숫자로 변환해야 한다.
+- 파생 변수(`age2`, `family`)를 만들면 기존 데이터에서 더 의미 있는 분석이 가능하다.
+- 시각화는 데이터의 패턴을 빠르게 이해하는 데 효과적이다.
+- 상관관계는 변수 간 선형 관계를 보는 지표이며, 인과관계를 의미하지는 않는다.
+- 같은 전처리 셀을 반복 실행하면 데이터 타입이나 값이 바뀌어 예상치 못한 결과가 나올 수 있다.
+
+## 실행 순서
+
+1. `ex_01.ipynb`를 연다.
+2. 라이브러리 import 셀을 실행한다.
+3. Titanic 데이터를 다시 로드한다.
+4. 결측치 처리 셀을 실행한다.
+5. 성별/객실등급 생존 분석 시각화를 실행한다.
+6. 파생 변수 생성 후 히트맵을 실행한다.
+
+## 정리
+
+이번 실습은 머신러닝 모델 학습 전 단계인 데이터 이해, 전처리, 탐색적 분석의 기초를 다룬다. Titanic 생존 데이터의 성별, 나이, 가족 수, 객실 등급, 요금 정보를 활용하여 생존 여부와 관련 있는 변수를 확인하고, 이후 분류 모델 학습으로 확장할 수 있는 기반을 마련했다.
