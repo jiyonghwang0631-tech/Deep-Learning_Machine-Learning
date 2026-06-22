@@ -1004,3 +1004,292 @@ titanic['sex'] = titanic['sex'].map({'male': 1, 'female': 0})
 ## 정리
 
 이번 실습은 머신러닝 모델 학습 전 단계인 데이터 이해, 전처리, 탐색적 분석의 기초를 다룬다. Titanic 생존 데이터의 성별, 나이, 가족 수, 객실 등급, 요금 정보를 활용하여 생존 여부와 관련 있는 변수를 확인하고, 이후 분류 모델 학습으로 확장할 수 있는 기반을 마련했다.
+
+--------------------------------------------------------------------------------------------------
+
+## 2026 - 06 - 22
+
+## ex_02.ipynb: 선형 회귀 기초
+
+`ex_02.ipynb`에서는 scikit-learn의 `LinearRegression`을 사용하여 가장 기본적인 선형 회귀 모델을 학습한다. 선형 회귀는 입력값 `x`와 정답값 `y` 사이의 직선 관계를 찾는 지도학습 알고리즘이다. 모델은 데이터에 가장 잘 맞는 기울기(`coef_`)와 절편(`intercept_`)을 계산하고, 이를 이용해 새로운 입력값의 결과를 예측한다.
+
+### 1. 기본 라이브러리
+
+```python
+import matplotlib.pyplot as plt
+from sklearn import linear_model
+```
+
+- `matplotlib.pyplot`: 학습 데이터와 회귀선을 시각화할 때 사용한다.
+- `sklearn.linear_model`: 선형 회귀 모델을 만들 때 사용한다.
+
+### 2. 간단한 데이터로 모델 학습
+
+```python
+reg = linear_model.LinearRegression()
+x = [[0], [1], [2]]
+y = [3, 4, 5]
+reg.fit(x, y)
+```
+
+`LinearRegression()`으로 모델 객체를 만들고, `fit()` 메서드로 입력 데이터와 정답 데이터를 학습시킨다. scikit-learn에서 입력 데이터 `x`는 2차원 형태로 전달해야 하므로 `[[0], [1], [2]]`처럼 작성한다.
+
+### 3. 회귀 계수와 절편 확인
+
+```python
+reg.coef_
+reg.intercept_
+```
+
+- `coef_`: 회귀식의 기울기
+- `intercept_`: 회귀식의 절편
+
+선형 회귀 모델은 다음과 같은 식을 학습한다.
+
+```text
+y = coef_ * x + intercept_
+```
+
+### 4. 새로운 값 예측
+
+```python
+reg.predict([[-4]])
+reg.predict([[5]])
+```
+
+`predict()`는 학습된 회귀식을 이용하여 새로운 입력값에 대한 예측 결과를 반환한다. 예측할 때도 입력값은 2차원 형태로 넣어야 한다.
+
+### 5. 키와 몸무게 데이터 예측
+
+```python
+X = [[174], [152], [138], [128], [186]]
+y = [71, 55, 46, 38, 88]
+
+reg = linear_model.LinearRegression()
+reg.fit(X, y)
+
+prediction = reg.predict([[165]])
+print(prediction)
+```
+
+이 예제에서는 키를 입력값, 몸무게를 정답값으로 사용한다. 모델을 학습한 뒤 키가 `165`인 사람의 몸무게를 예측한다.
+
+### 6. 산점도와 회귀선 시각화
+
+```python
+plt.scatter(X, y, color='red')
+plt.plot(X, reg.predict(X), color='white', linewidth=3)
+plt.show()
+```
+
+- `scatter()`: 실제 데이터를 점으로 표시한다.
+- `plot()`: 학습된 모델이 예측한 값을 선으로 표시한다.
+
+산점도는 실제 데이터의 분포를 보여 주고, 회귀선은 모델이 찾은 데이터의 전체적인 경향을 보여 준다.
+
+## ex_03.ipynb: Diabetes 데이터셋 회귀 실습
+
+`ex_03.ipynb`에서는 scikit-learn에서 제공하는 Diabetes 데이터셋을 사용하여 회귀 모델을 학습한다. Diabetes 데이터셋은 환자의 여러 신체 지표를 입력값으로 사용하고, 1년 뒤 당뇨병 진행 정도를 예측하는 회귀 문제에 사용된다.
+
+### 1. 라이브러리와 데이터 불러오기
+
+```python
+import matplotlib.pyplot as plt
+import numpy as np
+from sklearn.linear_model import LinearRegression
+from sklearn import datasets
+
+diabete = datasets.load_diabetes()
+```
+
+`sklearn.linear_model`은 모두 소문자로 작성해야 한다. `sklearn.Linear_model`처럼 대문자를 섞어 쓰면 `ModuleNotFoundError`가 발생한다.
+
+### 2. 데이터 구조 확인
+
+```python
+x = diabete['data']
+y = diabete['target']
+
+print(x.shape)
+print(y.shape)
+```
+
+Diabetes 데이터셋의 입력 데이터는 여러 개의 특성으로 구성되어 있고, 정답 데이터는 질병 진행 정도를 나타내는 수치값이다. 회귀 문제에서는 정답이 범주가 아니라 연속적인 숫자값이다.
+
+### 3. BMI 특성만 선택
+
+```python
+bmi = x[:, 2]
+x_new = x[:, np.newaxis, 2]
+```
+
+전체 특성 중 세 번째 열인 BMI 값을 선택하여 단순 선형 회귀에 사용한다. `x[:, 2]`는 1차원 배열이므로, scikit-learn 모델에 넣기 위해 `np.newaxis`를 사용해 2차원 형태로 바꾼다.
+
+```text
+x[:, 2]              -> (442,)
+x[:, np.newaxis, 2]  -> (442, 1)
+```
+
+### 4. 학습 데이터와 테스트 데이터 분리
+
+```python
+from sklearn.model_selection import train_test_split
+
+x_train, x_test, y_train, y_test = train_test_split(
+    x_new,
+    y,
+    test_size=0.1,
+    random_state=0
+)
+```
+
+`train_test_split()`은 데이터를 학습용과 테스트용으로 나눈다.
+
+- `x_train`, `y_train`: 모델 학습에 사용한다.
+- `x_test`, `y_test`: 모델 평가와 예측 확인에 사용한다.
+- `test_size=0.1`: 전체 데이터 중 10%를 테스트 데이터로 사용한다.
+- `random_state=0`: 실행할 때마다 같은 방식으로 데이터가 나뉘도록 고정한다.
+
+### 5. 모델 생성과 학습
+
+```python
+regression = LinearRegression()
+regression.fit(x_train, y_train)
+```
+
+`LinearRegression()`으로 회귀 모델을 만들고, `fit()`으로 학습 데이터를 학습시킨다.
+
+### 6. 회귀 계수와 절편 확인
+
+```python
+regression.coef_
+regression.intercept_
+```
+
+`coef_`와 `intercept_`를 확인하면 모델이 BMI와 당뇨병 진행 정도 사이의 관계를 어떤 직선으로 표현했는지 알 수 있다.
+
+### 7. 테스트 데이터 예측
+
+```python
+y_predict = regression.predict(x_test)
+print(y_predict)
+print(y_test)
+```
+
+`y_predict`는 모델이 예측한 값이고, `y_test`는 실제 정답값이다. 두 값을 비교하면 모델의 예측이 실제 값과 얼마나 가까운지 확인할 수 있다.
+
+### 8. 예측 결과 시각화
+
+```python
+plt.scatter(x_test, y_test, color='yellow', marker='.')
+plt.plot(x_test, regression.predict(x_test), color='blue', linewidth=3)
+plt.show()
+```
+
+테스트 데이터의 실제값을 점으로 표시하고, 학습된 회귀 모델이 예측한 값을 선으로 표시한다. 이때 `y_predict` 변수를 사용하려면 반드시 먼저 아래 코드가 실행되어 있어야 한다.
+
+```python
+y_predict = regression.predict(x_test)
+```
+
+그래프 셀만 따로 실행하면 `y_predict`가 정의되지 않아 `NameError`가 발생할 수 있다. 이런 문제를 줄이려면 그래프 셀 안에서 바로 `regression.predict(x_test)`를 호출하는 방식이 더 안전하다.
+
+### 9. Stem 그래프
+
+```python
+plt.stem(y_test, regression.predict(x_test))
+plt.show()
+```
+
+`stem()` 그래프는 실제값과 예측값의 대응 관계를 줄기 형태로 확인할 때 사용할 수 있다. 회귀 모델의 예측값이 실제값과 얼마나 차이 나는지 직관적으로 비교하는 보조 시각화로 활용할 수 있다.
+
+## 실습 중 발생한 주요 오류와 원인
+
+### 1. `ModuleNotFoundError: No module named 'sklearn.Linear_model'`
+
+원인:
+
+```python
+from sklearn.Linear_model import LinearRegression
+```
+
+`Linear_model`처럼 대문자를 사용했기 때문에 발생한다. scikit-learn의 모듈 이름은 소문자다.
+
+해결:
+
+```python
+from sklearn.linear_model import LinearRegression
+```
+
+### 2. `NameError: name 'reg' is not defined`
+
+원인:
+
+```python
+reg.fit(X, y)
+```
+
+`reg`라는 모델 객체를 만들기 전에 `fit()`을 호출했기 때문에 발생한다.
+
+해결:
+
+```python
+reg = linear_model.LinearRegression()
+reg.fit(X, y)
+```
+
+### 3. `NameError: name 'X_test' is not defined`
+
+원인:
+
+```python
+plt.plot(X_test, y_predict, color='blue', linewidth=3)
+```
+
+실제 노트북에서는 변수명이 `x_test`인데, 그래프 코드에서는 `X_test`처럼 대문자 `X`를 사용했기 때문에 발생한다. 파이썬은 대소문자를 구분한다.
+
+해결:
+
+```python
+plt.plot(x_test, y_predict, color='blue', linewidth=3)
+```
+
+### 4. `NameError: name 'y_predict' is not defined`
+
+원인:
+
+```python
+plt.plot(x_test, y_predict, color='blue', linewidth=3)
+```
+
+`y_predict`를 만들기 전에 그래프 셀을 먼저 실행했기 때문에 발생한다.
+
+해결:
+
+```python
+y_predict = regression.predict(x_test)
+
+plt.scatter(x_test, y_test, color='yellow', marker='.')
+plt.plot(x_test, y_predict, color='blue', linewidth=3)
+plt.show()
+```
+
+또는 다음처럼 예측을 그래프 코드 안에서 바로 실행한다.
+
+```python
+plt.scatter(x_test, y_test, color='yellow', marker='.')
+plt.plot(x_test, regression.predict(x_test), color='blue', linewidth=3)
+plt.show()
+```
+
+## 정리
+
+`ex_02.ipynb`와 `ex_03.ipynb`는 모두 선형 회귀 모델의 기본 흐름을 연습하는 노트북이다. `ex_02.ipynb`에서는 작은 직접 입력 데이터를 이용해 회귀 모델의 생성, 학습, 예측, 시각화를 확인했고, `ex_03.ipynb`에서는 scikit-learn의 Diabetes 데이터셋을 이용해 실제 데이터셋 기반의 학습 데이터 분리, 모델 학습, 테스트 데이터 예측 과정을 실습했다.
+
+선형 회귀 실습에서 중요한 점은 다음과 같다.
+
+1. 입력 데이터는 scikit-learn 모델에 맞게 2차원 형태로 준비해야 한다.
+2. 모델 객체를 만든 뒤 `fit()`으로 학습해야 `predict()`를 사용할 수 있다.
+3. 학습 데이터와 테스트 데이터를 분리하면 모델이 보지 않은 데이터에 대해 예측을 확인할 수 있다.
+4. 노트북에서는 셀 실행 순서가 중요하므로, 변수를 만드는 셀을 먼저 실행해야 한다.
+5. 파이썬 변수명과 모듈명은 대소문자를 구분한다.
