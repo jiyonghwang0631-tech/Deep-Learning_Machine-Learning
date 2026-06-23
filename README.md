@@ -1293,3 +1293,215 @@ plt.show()
 3. 학습 데이터와 테스트 데이터를 분리하면 모델이 보지 않은 데이터에 대해 예측을 확인할 수 있다.
 4. 노트북에서는 셀 실행 순서가 중요하므로, 변수를 만드는 셀을 먼저 실행해야 한다.
 5. 파이썬 변수명과 모듈명은 대소문자를 구분한다.
+
+--------------------------------------------------------------------------------------------------
+
+## 2026 - 06 -23
+
+## ex_04.ipynb: Iris 데이터셋 KNN 분류
+
+`ex_04.ipynb`에서는 Iris 데이터셋을 이용하여 KNN 분류 모델을 학습한다. 앞의 `ex_03.ipynb`가 연속적인 값을 예측하는 회귀 문제였다면, `ex_04.ipynb`는 붓꽃 품종을 맞히는 분류 문제다.
+
+### 1. Iris 데이터셋 불러오기
+
+```python
+from sklearn import datasets
+
+iris = datasets.load_iris()
+```
+
+Iris 데이터셋은 총 150개의 샘플과 4개의 입력 특성으로 구성된다.
+
+```python
+data = iris['data']
+target = iris['target']
+
+data.shape    # (150, 4)
+target.shape  # (150,)
+```
+
+입력 특성은 꽃받침 길이, 꽃받침 너비, 꽃잎 길이, 꽃잎 너비다. 정답값은 세 가지 붓꽃 품종을 숫자로 표현한다.
+
+```text
+0: Iris-Setosa
+1: Iris-Versicolour
+2: Iris-Virginica
+```
+
+### 2. 학습 데이터와 테스트 데이터 분리
+
+```python
+from sklearn.model_selection import train_test_split
+
+X = iris.data
+y = iris.target
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=0.2,
+    random_state=2026
+)
+```
+
+전체 데이터 중 20%를 테스트 데이터로 사용한다. 실습 결과 학습 데이터는 `(120, 4)` 형태가 되었다.
+
+### 3. KNN 모델 생성과 학습
+
+```python
+from sklearn.neighbors import KNeighborsClassifier
+
+knn = KNeighborsClassifier(n_neighbors=5)
+knn.fit(X_train, y_train)
+```
+
+KNN은 새 데이터가 들어왔을 때 가장 가까운 이웃 데이터들의 정답을 참고하여 클래스를 결정하는 알고리즘이다. `n_neighbors=5`는 가까운 이웃 5개를 기준으로 판단한다는 의미다.
+
+### 4. 예측과 정확도 평가
+
+```python
+y_predict = knn.predict(X_test)
+
+from sklearn import metrics
+scores = metrics.accuracy_score(y_test, y_predict)
+print(scores)
+```
+
+실습 결과 정확도는 다음과 같다.
+
+```text
+0.9666666666666667
+```
+
+즉, 테스트 데이터 30개 중 대부분을 올바르게 분류했으며 약 96.7%의 정확도를 보였다.
+
+### 5. 새로운 꽃 데이터 예측
+
+```python
+new_flower = [[3.0, 4.0, 5.0, 2.0]]
+print(knn.predict(new_flower))
+```
+
+실습 결과 예측값은 `[1]`이었다. 이는 입력한 새 꽃 데이터가 `Iris-Versicolour`로 분류되었다는 뜻이다.
+
+### 6. 혼동 행렬
+
+```python
+from sklearn.metrics import confusion_matrix
+
+confusion = confusion_matrix(y_test, y_predict)
+print(confusion)
+```
+
+실습 결과는 다음과 같다.
+
+```text
+[[11  0  0]
+ [ 0 10  1]
+ [ 0  0  8]]
+```
+
+혼동 행렬을 보면 Setosa와 Virginica는 모두 맞혔고, Versicolour 데이터 중 1개가 다른 클래스로 예측되었음을 알 수 있다.
+
+## project_01.ipynb: 강아지 품종 KNN 분류 프로젝트
+
+`project_01.ipynb`에서는 닥스훈트와 사모예드의 몸길이와 몸높이 데이터를 이용하여 품종을 분류한다. 직접 만든 작은 데이터셋으로 KNN 분류 과정을 연습하는 프로젝트다.
+
+### 1. 데이터 준비
+
+```python
+dach_length = [77, 78, 85, 83, 73, 77, 73, 80]
+dach_height = [25, 28, 29, 30, 21, 22, 17, 35]
+
+samo_length = [75, 77, 86, 86, 79, 83, 83, 88]
+samo_height = [56, 57, 50, 53, 60, 53, 49, 61]
+```
+
+닥스훈트와 사모예드 각각 8개씩, 총 16개의 데이터를 사용했다. 입력 특성은 `length`와 `height` 두 가지다.
+
+### 2. 데이터 시각화
+
+```python
+plt.scatter(dach_length, dach_height, color='red', label='Dachshund')
+plt.scatter(samo_length, samo_height, color='blue', marker='^', label='Samoyed')
+plt.scatter([79], [35], color='cyan', marker='p')
+plt.show()
+```
+
+빨간 점은 닥스훈트, 파란 삼각형은 사모예드, 하늘색 점은 분류하려는 알 수 없는 강아지를 의미한다.
+
+### 3. 입력 데이터와 정답 데이터 만들기
+
+```python
+dach_data = np.column_stack((dach_length, dach_height))
+samo_data = np.column_stack((samo_length, samo_height))
+```
+
+`np.column_stack()`은 길이와 높이를 한 행의 특성으로 묶어 2차원 데이터로 만든다.
+
+```python
+dach_target = [0] * 8
+samo_target = [1] * 8
+
+dogs = np.concatenate((dach_data, samo_data))
+labels = np.concatenate((dach_target, samo_target))
+```
+
+닥스훈트는 `0`, 사모예드는 `1`로 라벨링했다. 최종 입력 데이터 `dogs`는 `(16, 2)` 형태이고, 정답 데이터 `labels`는 `(16,)` 형태다.
+
+### 4. KNN 모델 학습과 예측
+
+```python
+from sklearn.neighbors import KNeighborsClassifier
+
+knn = KNeighborsClassifier(3)
+knn.fit(dogs, labels)
+
+unknown_dog = [[79, 35]]
+print(knn.predict(unknown_dog))
+```
+
+실습 결과 예측값은 `[0]`이었다. 따라서 길이 79, 높이 35인 알 수 없는 강아지는 닥스훈트로 분류되었다.
+
+### 5. 평균과 가상 데이터 생성
+
+각 품종의 길이와 높이 평균을 구한 뒤, 정규분포 난수를 이용하여 더 많은 가상 데이터를 만들었다.
+
+```python
+new_dach_length = np.random.normal(loc=78.25, scale=5.0, size=(200,))
+new_dach_height = np.random.normal(loc=25.875, scale=5.0, size=(200,))
+
+new_samo_length = np.random.normal(loc=82.125, scale=5.0, size=(200,))
+new_samo_height = np.random.normal(loc=54.875, scale=5.0, size=(200,))
+```
+
+평균값은 다음과 같다.
+
+- 닥스훈트 길이 평균: `78.25`
+- 닥스훈트 높이 평균: `25.875`
+- 사모예드 길이 평균: `82.125`
+- 사모예드 높이 평균: `54.875`
+
+`np.random.normal()`은 평균(`loc`)과 표준편차(`scale`)를 기준으로 정규분포 데이터를 생성한다. 여기서는 각 특성마다 200개씩 가상 데이터를 만들었다.
+
+### 6. 가상 데이터 결합
+
+```python
+new_dach_data = np.column_stack((new_dach_length, new_dach_height))
+new_samo_data = np.column_stack((new_samo_length, new_samo_height))
+```
+
+생성된 가상 데이터는 각각 `(200, 2)` 형태다. 이 데이터도 기존 데이터와 마찬가지로 KNN 모델 학습이나 시각화에 사용할 수 있다.
+
+## KNN 분류 실습 정리
+
+`ex_04.ipynb`와 `project_01.ipynb`는 모두 KNN 분류 알고리즘을 사용한다. `ex_04.ipynb`는 scikit-learn에서 제공하는 표준 Iris 데이터셋을 사용했고, `project_01.ipynb`는 직접 만든 강아지 길이와 높이 데이터를 사용했다.
+
+KNN 실습에서 중요한 점은 다음과 같다.
+
+1. KNN은 가까운 데이터의 정답을 참고하여 새 데이터를 분류한다.
+2. `n_neighbors`는 참고할 이웃의 개수를 의미한다.
+3. 입력 데이터 `X`는 2차원 배열, 정답 데이터 `y`는 1차원 배열로 준비한다.
+4. 분류 문제에서는 `accuracy_score()`로 예측 정확도를 확인할 수 있다.
+5. `confusion_matrix()`를 사용하면 어떤 클래스를 맞히고 틀렸는지 자세히 볼 수 있다.
+6. 직접 만든 데이터도 `numpy`로 형태를 맞추면 scikit-learn 모델에 사용할 수 있다.
