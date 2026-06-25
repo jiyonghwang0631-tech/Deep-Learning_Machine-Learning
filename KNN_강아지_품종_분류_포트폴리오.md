@@ -77,19 +77,28 @@ new_data.shape        -> (80, 2)
 모델 학습 후 테스트 데이터에 대한 예측을 수행하였고, `accuracy_score()`를 이용하여 정확도를 확인하였다.
 
 ```text
+기본 예측값: [0]
 테스트 데이터 정확도: 1.0000
+학습 데이터 점수: 1.0000
+테스트 데이터 점수: 1.0000
 
 단, 가상 데이터는 `np.random.normal()`로 생성되므로 노트북을 다시 실행할 때마다 정확도는 조금씩 달라질 수 있다.
 ```
 
+`[0]`은 입력한 강아지 데이터가 닥스훈트로 예측되었다는 의미다. 점수가 `1.0000`이라는 것은 현재 생성된 테스트 데이터 기준으로 모델이 모든 데이터를 올바르게 분류했다는 의미다.
+
 그래프에서는 학습용 데이터와 테스트용 데이터를 품종별로 구분하여 시각화하였다.
 
 ```python
-plt.scatter(all_data[all_target == 0, 0], all_data[all_target == 0, 1], label='All Dachshund')
-plt.scatter(all_data[all_target == 1, 0], all_data[all_target == 1, 1], label='All Samoyed')
+plt.scatter(new_dach_data[:, 0], new_dach_data[:, 1], color='red', label='Dachshund')
+plt.scatter(new_samo_data[:, 0], new_samo_data[:, 1], color='blue', label='Samoyed')
+plt.scatter(X_test[y_predict == 0, 0], X_test[y_predict == 0, 1], color='yellow', label='Pred Dachshund')
+plt.scatter(X_test[y_predict == 1, 0], X_test[y_predict == 1, 1], color='cyan', label='Pred Samoyed')
 
-plt.scatter(new_data[new_target == 0, 0], new_data[new_target == 0, 1], label='New Dachshund')
-plt.scatter(new_data[new_target == 1, 0], new_data[new_target == 1, 1], label='New Samoyed')
+plt.xlabel('length')
+plt.ylabel('height')
+plt.legend(loc='upper left')
+plt.show()
 ```
 
 이를 통해 닥스훈트와 사모예드의 데이터 분포가 길이와 높이를 기준으로 구분되는 것을 확인할 수 있었다.
