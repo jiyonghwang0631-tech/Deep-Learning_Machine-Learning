@@ -1505,3 +1505,248 @@ KNN 실습에서 중요한 점은 다음과 같다.
 4. 분류 문제에서는 `accuracy_score()`로 예측 정확도를 확인할 수 있다.
 5. `confusion_matrix()`를 사용하면 어떤 클래스를 맞히고 틀렸는지 자세히 볼 수 있다.
 6. 직접 만든 데이터도 `numpy`로 형태를 맞추면 scikit-learn 모델에 사용할 수 있다.
+
+--------------------------------------------------------------------------------------------------
+
+## 2026 - 06 - 26
+
+# ex_05.ipynb: digits 손글씨 숫자 KNN 분류
+
+`ex_05.ipynb`에서는 scikit-learn의 `digits` 데이터셋을 이용해 손글씨 숫자를 분류한다. `digits`는 0부터 9까지의 숫자 이미지 데이터이며, 각 이미지는 8x8 픽셀로 구성된다.
+
+### 핵심 흐름
+
+```python
+from sklearn import datasets
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score
+
+digits = datasets.load_digits()
+
+data = digits.data
+target = digits.target
+
+x_train, x_test, y_train, y_test = train_test_split(
+    data,
+    target,
+    train_size=0.8
+)
+
+knn = KNeighborsClassifier()
+knn.fit(x_train, y_train)
+
+y_predict = knn.predict(x_test)
+score = accuracy_score(y_test, y_predict)
+print(score)
+```
+
+실습 결과 `data.shape`은 `(1797, 64)`, `target.shape`은 `(1797,)`였다. 8x8 이미지를 64개의 숫자 특성으로 펼쳐 KNN 모델에 넣는다.
+
+정확도 결과:
+
+```text
+0.9861111111111112
+```
+
+`classification_report()`를 사용하면 전체 정확도뿐 아니라 숫자별 `precision`, `recall`, `f1-score`도 확인할 수 있다.
+
+## ex_06.ipynb: 퍼셉트론과 MLP 기초
+
+`ex_06.ipynb`에서는 퍼셉트론을 직접 구현하고, scikit-learn의 `Perceptron`과 Keras의 `Sequential` 모델을 이용해 간단한 논리 연산을 학습한다.
+
+### 직접 구현한 퍼셉트론
+
+```python
+import numpy as np
+
+epsilon = 0.0000001
+
+def step_func(t):
+    if t > epsilon:
+        return 1
+    else:
+        return 0
+
+X = np.array([
+    [0, 0, 1],
+    [0, 1, 1],
+    [1, 0, 1],
+    [1, 1, 1]
+])
+
+y = np.array([0, 0, 0, 1])
+W = np.zeros(len(X[0]))
+```
+
+`X`의 마지막 값 `1`은 bias 역할을 한다. `y = [0, 0, 0, 1]`은 AND 연산의 정답이다.
+
+```python
+def perceptron_fit(X, Y, epochs=10):
+    global W
+    eta = 0.2
+    for t in range(epochs):
+        for i in range(len(X)):
+            predict = step_func(np.dot(X[i], W))
+            error = Y[i] - predict
+            W += eta * error * X[i]
+```
+
+퍼셉트론은 예측값과 정답의 차이인 `error`를 이용해 가중치 `W`를 수정한다. 실습 결과 AND 연산은 다음처럼 학습되었다.
+
+```text
+0 0 -> 0
+0 1 -> 0
+1 0 -> 0
+1 1 -> 1
+```
+
+### scikit-learn Perceptron
+
+```python
+from sklearn.linear_model import Perceptron
+
+X = [[0, 0], [0, 1], [1, 0], [1, 1]]
+y = [0, 0, 0, 1]
+
+clf = Perceptron(tol=1e-3, random_state=0)
+clf.fit(X, y)
+
+print(clf.predict(X))
+```
+
+직접 구현하지 않아도 `Perceptron` 클래스를 이용하면 같은 방식의 선형 분류 모델을 학습할 수 있다.
+
+### Keras MLP 모델
+
+```python
+import tensorflow as tf
+import keras
+
+mlp = tf.keras.models.Sequential()
+
+input_layer = keras.layers.Input(shape=(2,))
+dense1 = keras.layers.Dense(32, activation='sigmoid')
+dense2 = keras.layers.Dense(1, activation='sigmoid')
+
+mlp.add(input_layer)
+mlp.add(dense1)
+mlp.add(dense2)
+
+mlp.compile(loss='mse', optimizer='adam')
+mlp.fit(X, y, epochs=2000)
+print(mlp.predict(X))
+```
+
+Keras 모델은 `compile()`로 손실 함수와 최적화 방법을 정하고, `fit()`으로 학습한다. 은닉층을 추가한 MLP는 단층 퍼셉트론보다 복잡한 패턴을 학습할 수 있다.
+
+## ex_07.ipynb: TensorFlow/Keras MNIST 손글씨 숫자 분류
+
+`ex_07.ipynb`에서는 TensorFlow/Keras를 이용해 MNIST 손글씨 숫자 데이터셋을 학습한다. MNIST는 28x28 크기의 손글씨 숫자 이미지 데이터셋이다.
+
+### 데이터와 모델
+
+```python
+import tensorflow as tf
+
+(x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
+
+model = tf.keras.models.Sequential()
+model.add(tf.keras.layers.Input(shape=(28*28,)))
+model.add(tf.keras.layers.Dense(units=512, activation='relu', name='Hidden1'))
+model.add(tf.keras.layers.Dense(units=256, activation='relu', name='Hidden2'))
+model.add(tf.keras.layers.Dense(units=10, activation='softmax', name='OutjuptLayer'))
+```
+
+데이터 형태는 다음과 같다.
+
+```text
+x_train: (60000, 28, 28)
+y_train: (60000,)
+x_test:  (10000, 28, 28)
+y_test:  (10000,)
+```
+
+주의할 점은 `Input`의 위치다.
+
+```python
+tf.keras.models.Input(...)
+```
+
+위 코드는 오류가 난다. 다음처럼 사용해야 한다.
+
+```python
+tf.keras.layers.Input(shape=(28*28,))
+```
+
+또는:
+
+```python
+tf.keras.Input(shape=(28*28,))
+```
+
+### 이미지 전처리
+
+```python
+x_images = x_train.reshape((60000, 28*28))
+x_images_norm = (x_images / 255).astype('float32')
+
+x_images_test = x_test.reshape(10000, 28*28)
+x_images_test_norm = (x_images_test / 255).astype('float32')
+```
+
+Dense 모델에 넣기 위해 28x28 이미지를 784개의 1차원 배열로 펼친다. 픽셀값은 0부터 255 사이이므로 255로 나누어 0부터 1 사이로 정규화한다.
+
+### 학습, 저장, 평가
+
+```python
+model.compile(
+    loss='sparse_categorical_crossentropy',
+    optimizer='adam',
+    metrics=['accuracy']
+)
+
+model.fit(x_images_norm, y_train, epochs=20)
+model.save("MNIST_20260626_15-35.keras")
+model.evaluate(x_images_test_norm, y_test)
+```
+
+실습 결과:
+
+```text
+loss: 0.1753
+accuracy: 0.9802
+```
+
+테스트 데이터 기준 약 98.0% 정확도를 보였다.
+
+### 직접 만든 이미지 예측
+
+```python
+import cv2
+
+img = cv2.imread("digit.png.png", cv2.IMREAD_GRAYSCALE)
+resize_img = cv2.resize(img, (28, 28))
+resize_img = resize_img.astype('float32')
+
+inverse_img = 255 - resize_img
+inverse_img_norm = inverse_img / 255.0
+
+result = model.predict(inverse_img_norm.reshape(1, 784))
+print(result.argmax())
+```
+
+직접 만든 이미지는 MNIST와 같은 입력 형태로 맞춰야 한다. 흑백으로 읽고, 28x28로 줄이고, 색을 반전한 뒤, 0부터 1 사이로 정규화하고, `(1, 784)` 형태로 바꿔 예측한다.
+
+실습 결과 `digit.png.png` 이미지는 숫자 `4`로 예측되었다.
+
+## 신경망 실습 정리
+
+1. 퍼셉트론은 입력값과 가중치의 내적 결과를 활성화 함수에 넣어 출력을 만든다.
+2. 오차가 발생하면 학습률에 따라 가중치를 수정한다.
+3. 단층 퍼셉트론은 선형 분리 가능한 문제에 적합하다.
+4. 은닉층을 추가한 MLP는 더 복잡한 패턴을 학습할 수 있다.
+5. Dense 모델에 이미지를 넣으려면 2차원 이미지를 1차원 배열로 펼친다.
+6. 이미지 픽셀값은 0부터 1 사이로 정규화하면 학습이 안정적이다.
+7. 다중 클래스 분류에서는 출력층에 `softmax`, 손실 함수에 `sparse_categorical_crossentropy`를 사용할 수 있다.
+8. 학습한 모델은 `.keras` 파일로 저장하고 나중에 다시 불러와 예측에 사용할 수 있다.
