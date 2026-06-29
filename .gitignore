@@ -1,0 +1,13 @@
+# Jupyter notebook checkpoints
+**/.ipynb_checkpoints/
+**/checkpoint/
+**/checkpoints/
+
+# Local Jupyter runtime/config data
+.jupyter-config/
+.jupyter-data/
+.jupyter-runtime/
+
+# Python cache files
+__pycache__/
+*.py[cod]
